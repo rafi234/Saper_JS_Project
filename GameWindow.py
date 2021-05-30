@@ -20,6 +20,7 @@ class GameWindow:
             raise InputError
         else:
             self._numberOfMines = number_of_mines
+            self._minesLeft = number_of_mines
 
         self._time = 0
         self._gameTable = []
@@ -34,18 +35,19 @@ class GameWindow:
         self.__entryMines = None
 
     def getSizeOfGameWindow(self):
+
         self._topLevel = tk.Toplevel(self.root)
         self._topLevel.title('Init Game Window.')
         self._topLevel.grab_set()
 
-        labelRows = tk.Label(self._topLevel, text='Number of rows: ',
-                             font=8, padx=20, pady=10) \
+        tk.Label(self._topLevel, text='Number of rows: ',
+                 font=8, padx=20, pady=10) \
             .grid(row=0, column=0)
-        labelColumns = tk.Label(self._topLevel, text='Number of column: ',
-                                font=8, padx=20, pady=10) \
+        tk.Label(self._topLevel, text='Number of column: ',
+                 font=8, padx=20, pady=10) \
             .grid(row=1, column=0)
-        labelMines = tk.Label(self._topLevel, text='Number of mines: ',
-                              font=8, padx=20, pady=10) \
+        tk.Label(self._topLevel, text='Number of mines: ',
+                 font=8, padx=20, pady=10) \
             .grid(row=2, column=0)
 
         self._columnsIV = tk.IntVar()
@@ -88,35 +90,34 @@ class GameWindow:
     def initGameBoard(self):
         """"""
 
-        # self._fields = [[0] * self._gameWindowRows] * self._gameWindowColumns
         self._fields = [[tk.Button(self.root, width=2, height=1) for _ in range(self._gameWindowColumns)]
                         for _ in range(self._gameWindowRows)]
 
-        for i in range(self._gameWindowRows):
-            for j in range(self._gameWindowColumns):
+        for i in range(self._gameWindowColumns):
+            for j in range(self._gameWindowRows):
                 if i == 0:
-                    # self._fields[i][j] = tk.Button(self.root, width=2, height=1)
-                    self._fields[i][j].grid(row=j + 2, column=i, padx=(50, 0))
-                    self._fields[i][j].bind('<Button-1>',
-                                            lambda event, p=self._fields[i][j], x=i, y=j: self.leftButton(p, x, y))
-                    self._fields[i][j].bind('<Button-3>', lambda event, p=self._fields[i][j]: self.rightButton(p))
+                    self._fields[j][i].grid(row=j + 2, column=i, padx=(50, 0))
+                    self._fields[j][i].bind('<Button-1>',
+                                            lambda event, p=self._fields[j][i], x=j, y=i: self.leftButton(p, x, y))
+                    self._fields[j][i].bind('<Button-3>',
+                                            lambda event, p=self._fields[j][i], x=i, y=j: self.rightButton(p, x, y))
                 else:
-                    # self._fields[i][j] = tk.Button(self.root, width=2, height=1)
-                    self._fields[i][j].grid(row=j + 2, column=i)
-                    self._fields[i][j].bind('<Button-1>',
-                                            lambda event, p=self._fields[i][j], x=i, y=j: self.leftButton(p, x, y))
-                    self._fields[i][j].bind('<Button-3>', lambda event, p=self._fields[i][j]: self.rightButton(p))
-        print(self._fields)
+                    self._fields[j][i].grid(row=j + 2, column=i)
+                    self._fields[j][i].bind('<Button-1>',
+                                            lambda event, p=self._fields[j][i], x=j, y=i: self.leftButton(p, x, y))
+                    self._fields[j][i].bind('<Button-3>',
+                                            lambda event, p=self._fields[j][i], x=i, y=j: self.rightButton(p, x, y))
 
     def initGameTable(self):
-        self._gameTable = [[0 for _ in range(self._gameWindowRows)] for _ in range(self._gameWindowColumns)]
+
+        self._gameTable = [[0 for _ in range(self._gameWindowColumns)] for _ in range(self._gameWindowRows)]
 
         randomFieldsForMines = self.getRandomFieldsForMines()
 
         for i in range(self._numberOfMines):
             y = randomFieldsForMines[i][0]
             x = randomFieldsForMines[i][1]
-            self._gameTable[y][x] = -1
+            self._gameTable[x][y] = -1
 
         self.checkNeighbours()
 
@@ -135,72 +136,64 @@ class GameWindow:
 
     def checkNeighbours(self):
 
-        for i in range(self._gameWindowColumns):
-            for j in range(self._gameWindowRows):
+        for i in range(self._gameWindowRows):
+            for j in range(self._gameWindowColumns):
                 if self._gameTable[i][j] == -1:
                     self.findNeighbours(i, j)
         print(self._gameTable)
 
     def findNeighbours(self, i, j):
-        for k in range(i - 1, i + 2):
-            if self._gameWindowColumns > k >= 0:
-                for m in range(j - 1, j + 2):
-                    if not (m == j and k == i):
-                        if 0 <= m < self._gameWindowRows and self._gameTable[k][m] != -1:
-                            self._gameTable[k][m] += 1
 
-    def rightButton(self, button):
+        for k in range(j - 1, j + 2):
+            if self._gameWindowColumns > k >= 0:
+                for m in range(i - 1, i + 2):
+                    if not (m == i and k == j):
+                        if 0 <= m < self._gameWindowRows and self._gameTable[m][k] != -1:
+                            self._gameTable[m][k] += 1
+
+    def rightButton(self, button, i, j):
 
         if button['text'] == '':
             button['text'] = 'f'
             self.checkField()
+            self.checkIfOnPickedFieldIsMine(i, j)
         elif button['text'] == 'f':
             button['text'] = '?'
             self.checkField(False)
+            self.checkIfOnPickedFieldIsMine(i, j, False)
         else:
             button['text'] = ''
 
-    def leftButton(self, button, i, j):
+    def checkIfOnPickedFieldIsMine(self, i, j, condition=True):
 
-        if self._gameTable[j][i] == -1:
-            button['text'] = 'X'
-            # koniec gry
-        else:
-            # self.updateButton(button, i, j)
-            pass
+        if condition:
+            if self._gameTable[i][j] == -1:
+                self._minesLeft -= 1
+            else:
+                self._minesLeft += 1
 
-    def updateButton(self, button, i, j):
+    def finishGameWithWin(self):
+        if self._minesLeft == 0:
+            if self._gameWindowColumns*self._gameWindowRows - self._numberOfMines == self._fields.count(tk.Label):
+                self.initGameWinWindow()
 
-        self.disableButton(button, i, j)
+    def initGameWinWindow(self):
 
-        if self._gameTable[i][j] > 0:
-            button['text'] = self._gameTable[j][i]
-        else:
-            for x in range(i - 1, i + 2):
-                if self._gameWindowColumns > x >= 0:
-                    for y in range(j - 1, j + 2):
-                        if self._gameWindowRows > y >= 0 and not (i == x and j == y):
-                            if isinstance(self._fields[y][x], tk.Button) and self._gameTable[y][x] != -1:
-                                self.updateButton(self._fields[y][x], y, x)
+        gameWinWindowTopLevel = tk.Toplevel(self.root)
+        gameWinWindowTopLevel.grab_set()
+        tk.Label(gameWinWindowTopLevel, text="YOU WON", font=40).grid(row=0, column=0)
 
-    def disableButton(self, button, i, j):
-        button.configure(state='disable', border=1)
-        button.unbind('<Button-1>')
-        button.unbind('<Button-3>')
+        nextGameButton = tk.Button(gameWinWindowTopLevel, text='Next Game')
+        nextGameButton.bind('<Button-1>', lambda event: self.resetGame())
+        nextGameButton.grid(row=1, column=0)
 
-        button = tk.Label(self.root)
+        exitButton = tk.Button(gameWinWindowTopLevel, text='Exit')
+        exitButton.bind('<Button-1>', lambda event: self.closeGame(gameWinWindowTopLevel))
+        exitButton.grid(row=1, column=1)
 
-        if i == 0:
-            button.grid(row=j + 2, column=i, padx=(50, 0))
-        else:
-            button.grid(row=j + 2, column=i)
-
-    def startTimer(self, timer):
-
-        zerosLeft = 4 - len(str(self._time))
-        timer['text'] = zerosLeft * '0' + str(self._time)
-        self._time += 1
-        self.root.after(1000, self.startTimer, timer)
+    def closeGame(self, gameWinWindowTopLevel):
+        self.root.destroy()
+        gameWinWindowTopLevel.destroy()
 
     def checkField(self, condition=True):
 
@@ -212,6 +205,49 @@ class GameWindow:
         if self._numberOfMines >= 0:
             zerosLeft = 4 - len(str(self._numberOfMines))
             self._buttons[0]['text'] = zerosLeft * '0' + str(self._numberOfMines)
+
+    def leftButton(self, button, i, j):
+
+        if self._gameTable[i][j] == -1:
+            button['text'] = 'X'
+        else:
+            self.updateButton(button, i, j)
+
+    def updateButton(self, button, i, j):
+
+        if isinstance(button, tk.Button) and button['state'] != 'disabled':
+            self.disableButton(i, j)
+            if self._gameTable[i][j] > 0:
+                self.changeButtonIntoLabel(i, j)
+            else:
+                self.findAllZeroFieldsRecursion(i, j)
+
+    def findAllZeroFieldsRecursion(self, i, j):
+        for x in range(i - 1, i + 2):
+            if self._gameWindowRows > x >= 0:
+                for y in range(j - 1, j + 2):
+                    if self._gameWindowColumns > y >= 0 and not (i == x and j == y):
+                        self.updateButton(self._fields[x][y], x, y)
+
+    def changeButtonIntoLabel(self, i, j):
+
+        if j == 0:
+            self._fields[i][j].grid(row=i + 2, column=j, padx=(50, 0))
+        else:
+            self._fields[i][j].grid(row=i + 2, column=j)
+
+    def disableButton(self, i, j):
+        self._fields[i][j].configure(state='disabled', border=1)
+        self._fields[i][j].unbind('<Button-1>')
+        self._fields[i][j].unbind('<Button-3>')
+        self._fields[i][j] = tk.Label(self.root, text=str(self._gameTable[i][j]))
+
+    def startTimer(self, timer):
+
+        zerosLeft = 4 - len(str(self._time))
+        timer['text'] = zerosLeft * '0' + str(self._time)
+        self._time += 1
+        self.root.after(1000, self.startTimer, timer)
 
     def resetGame(self):
 
