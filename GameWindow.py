@@ -1,3 +1,5 @@
+from tkinter.font import *
+
 import InputError
 import tkinter as tk
 import random as rand
@@ -20,7 +22,6 @@ class GameWindow:
             raise InputError
         else:
             self._numberOfMines = number_of_mines
-            self._minesLeft = number_of_mines
 
         self._time = 0
         self._gameTable = []
@@ -33,8 +34,9 @@ class GameWindow:
         self.__entryColumns = None
         self.__entryRows = None
         self.__entryMines = None
+        self._emptyFields = game_window_rows * game_window_columns - number_of_mines
 
-    def getSizeOfGameWindow(self):
+    def getSizeOfNewGameWindow(self, ):
 
         self._topLevel = tk.Toplevel(self.root)
         self._topLevel.title('Init Game Window.')
@@ -82,7 +84,7 @@ class GameWindow:
         self.startTimer(timer)
 
         resetButton = tk.Button(self.root, width=3, height=1, text='reset')
-        resetButton.bind('<Button-1>', lambda event: self.getSizeOfGameWindow())
+        resetButton.bind('<Button-1>', lambda event: self.getSizeOfNewGameWindow())
         resetButton.grid(row=0, column=self._gameWindowRows // 2)
 
         self._buttons = [counterOfMines, timer, resetButton]
@@ -156,35 +158,42 @@ class GameWindow:
         if button['text'] == '':
             button['text'] = 'f'
             self.checkField()
-            self.checkIfOnPickedFieldIsMine(i, j)
+            self.checkIfGameIsOver()
         elif button['text'] == 'f':
             button['text'] = '?'
             self.checkField(False)
-            self.checkIfOnPickedFieldIsMine(i, j, False)
         else:
             button['text'] = ''
 
-    def checkIfOnPickedFieldIsMine(self, i, j, condition=True):
+    def checkIfGameIsOver(self):
+        if self._numberOfMines == 0:
+            if self._emptyFields == self.countAllLabelFields():
+                self.initGameOverWindow()
 
-        if condition:
-            if self._gameTable[i][j] == -1:
-                self._minesLeft -= 1
-            else:
-                self._minesLeft += 1
+    def countAllLabelFields(self):
 
-    def finishGameWithWin(self):
-        if self._minesLeft == 0:
-            if self._gameWindowColumns*self._gameWindowRows - self._numberOfMines == self._fields.count(tk.Label):
-                self.initGameWinWindow()
+        counter = 0
+        for i in range(self._gameWindowColumns):
+            for j in range(self._gameWindowRows):
+                if isinstance(self._fields[j][i], tk.Label):
+                    counter += 1
 
-    def initGameWinWindow(self):
+        return counter
+
+    def initGameOverWindow(self, condition=True):
 
         gameWinWindowTopLevel = tk.Toplevel(self.root)
         gameWinWindowTopLevel.grab_set()
-        tk.Label(gameWinWindowTopLevel, text="YOU WON", font=40).grid(row=0, column=0)
+        if condition:
+            message = "YOU WON!!!"
+        else:
+            message = "YOU LOST!!!"
+
+        tk.Label(gameWinWindowTopLevel,
+                 text=message, font=40, padx=50, pady=30).grid(row=0, column=0, columnspan=5)
 
         nextGameButton = tk.Button(gameWinWindowTopLevel, text='Next Game')
-        nextGameButton.bind('<Button-1>', lambda event: self.resetGame())
+        nextGameButton.bind('<Button-1>', lambda event: self.getSizeOfNewGameWindow())
         nextGameButton.grid(row=1, column=0)
 
         exitButton = tk.Button(gameWinWindowTopLevel, text='Exit')
@@ -192,8 +201,8 @@ class GameWindow:
         exitButton.grid(row=1, column=1)
 
     def closeGame(self, gameWinWindowTopLevel):
-        self.root.destroy()
         gameWinWindowTopLevel.destroy()
+        self.root.destroy()
 
     def checkField(self, condition=True):
 
@@ -209,16 +218,22 @@ class GameWindow:
     def leftButton(self, button, i, j):
 
         if self._gameTable[i][j] == -1:
-            button['text'] = 'X'
+            for i in range(self._gameWindowRows):
+                for j in range(self._gameWindowColumns):
+                    if self._gameTable[i][j] == -1:
+                        self._fields[i][j]['text'] = 'X'
+            self.initGameOverWindow(False)
         else:
             self.updateButton(button, i, j)
+
+        self.checkIfGameIsOver()
 
     def updateButton(self, button, i, j):
 
         if isinstance(button, tk.Button) and button['state'] != 'disabled':
             self.disableButton(i, j)
             if self._gameTable[i][j] > 0:
-                self.changeButtonIntoLabel(i, j)
+                self.displayButton(i, j)
             else:
                 self.findAllZeroFieldsRecursion(i, j)
 
@@ -229,7 +244,7 @@ class GameWindow:
                     if self._gameWindowColumns > y >= 0 and not (i == x and j == y):
                         self.updateButton(self._fields[x][y], x, y)
 
-    def changeButtonIntoLabel(self, i, j):
+    def displayButton(self, i, j):
 
         if j == 0:
             self._fields[i][j].grid(row=i + 2, column=j, padx=(50, 0))
@@ -237,10 +252,55 @@ class GameWindow:
             self._fields[i][j].grid(row=i + 2, column=j)
 
     def disableButton(self, i, j):
+
         self._fields[i][j].configure(state='disabled', border=1)
         self._fields[i][j].unbind('<Button-1>')
         self._fields[i][j].unbind('<Button-3>')
-        self._fields[i][j] = tk.Label(self.root, text=str(self._gameTable[i][j]))
+
+        number = self._gameTable[i][j]
+        myFont = Font(self.root, size=10, weight=BOLD)
+        if number == 1:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='blue',
+                                          font=myFont)
+        elif number == 2:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='green',
+                                          font=myFont)
+        elif number == 3:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='red',
+                                          font=myFont)
+        elif number == 4:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='#000066',
+                                          font=myFont)
+        elif number == 5:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='#FFEBEE',
+                                          font=myFont)
+        elif number == 6:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='#455A64',
+                                          font=myFont)
+        elif number == 7:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='#FFD740',
+                                          font=myFont)
+        elif number == 8:
+            self._fields[i][j] = tk.Label(self.root,
+                                          text=str(number),
+                                          foreground='#E9C2A6',
+                                          font=myFont)
+        else:
+            self._fields[i][j] = tk.Label(self.root)
 
     def startTimer(self, timer):
 
@@ -283,7 +343,7 @@ class GameWindow:
 
 if __name__ == '__main__':
     gw = GameWindow(4, 5, 2)
-    gw.getSizeOfGameWindow()
+    gw.getSizeOfNewGameWindow()
     gw.initUpperGamePanel()
     gw.getRandomFieldsForMines()
     gw.initGameBoard()
