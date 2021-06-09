@@ -79,9 +79,12 @@ class GameWindow:
     def resetGame(self, newRows, newColumns, newMines):
         """This method restarts game."""
 
-        self.gameWindowRows = newRows
-        self.gameWindowColumns = newColumns
-        self.numberOfMines = newMines
+        # self.setGameWindowRows(self._rowsIV.get())
+        # self.setGameWindowColumn(self._columnsIV.get())
+        # self.setNumberOfMines(self._minesIV.get())
+        self.setGameWindowRows(newRows)
+        self.setGameWindowColumn(newColumns)
+        self.setNumberOfMines(newMines)
 
         self.setEmptyFields()
         self._topLevel.destroy()
@@ -432,12 +435,7 @@ class GameWindow:
         self._time += 1
         self.root.after(1000, self.startTimer, timer)
 
-    @property
-    def gameWindowColumns(self) -> int:
-        return self._gameWindowColumns
-
-    @gameWindowColumns.setter
-    def gameWindowColumns(self, new):
+    def setGameWindowColumn(self, new):
         """Setter for _gameWindowColumn"""
 
         if 15 > new > 2:
@@ -445,12 +443,7 @@ class GameWindow:
         else:
             raise InputError
 
-    @property
-    def gameWindowRows(self) -> int:
-        return self._gameWindowRows
-
-    @gameWindowRows.setter
-    def gameWindowRows(self, new):
+    def setGameWindowRows(self, new):
         """Setter for _gameWindowRows"""
 
         if 15 > new > 2:
@@ -458,12 +451,7 @@ class GameWindow:
         else:
             raise InputError
 
-    @property
-    def numberOfMines(self):
-        return self._numberOfMines
-
-    @numberOfMines.setter
-    def numberOfMines(self, new):
+    def setNumberOfMines(self, new):
         """Setter for _numberOfMines"""
 
         if self._gameWindowColumns * self._gameWindowRows >= new > 0:
