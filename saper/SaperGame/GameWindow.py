@@ -79,9 +79,6 @@ class GameWindow:
     def resetGame(self, newRows, newColumns, newMines):
         """This method restarts game."""
 
-        # self.setGameWindowRows(self._rowsIV.get())
-        # self.setGameWindowColumn(self._columnsIV.get())
-        # self.setNumberOfMines(self._minesIV.get())
         self.setGameWindowRows(newRows)
         self.setGameWindowColumn(newColumns)
         self.setNumberOfMines(newMines)
