@@ -76,12 +76,16 @@ class GameWindow:
         """This method set up new game Window and starts the game."""
         self.getSizeOfNewGameWindow()
 
-    def resetGame(self):
+    def resetGame(self, newRows, newColumns, newMines):
         """This method restarts game."""
 
-        self.setGameWindowRows(self._rowsIV.get())
-        self.setGameWindowColumn(self._columnsIV.get())
-        self.setNumberOfMines(self._minesIV.get())
+        # self.setGameWindowRows(self._rowsIV.get())
+        # self.setGameWindowColumn(self._columnsIV.get())
+        # self.setNumberOfMines(self._minesIV.get())
+        self.setGameWindowRows(newRows)
+        self.setGameWindowColumn(newColumns)
+        self.setNumberOfMines(newMines)
+
         self.setEmptyFields()
         self._topLevel.destroy()
         self.root.destroy()
@@ -121,7 +125,8 @@ class GameWindow:
         entryMines.grid(row=2, column=1)
 
         saveButton = tk.Button(self._topLevel, text='Save')
-        saveButton.bind('<Button-1>', lambda event: self.resetGame())
+        saveButton.bind('<Button-1>',
+                        lambda event: self.resetGame(self._rowsIV.get(), self._columnsIV.get(), self._minesIV.get()))
         saveButton.grid(row=4, column=0)
 
         cancelButton = tk.Button(self._topLevel, text='Cancel')
